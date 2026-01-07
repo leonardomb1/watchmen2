@@ -1,0 +1,162 @@
+@startuml Access_Control_System_ERD
+!define Table(name,desc) class name as "desc" << (T,#FFAAAA) >>
+!define primary_key(x) <b>x</b>
+!define foreign_key(x) <i>x</i>
+
+skinparam classAttributeIconSize 0
+
+' USER TABLE (System Users - Gatemen/Operators)
+class Users {
+  primary_key(internal_id): INTEGER
+  --
+  public_id: GUID
+  first_name: VARCHAR(100)
+  last_name: VARCHAR(100)
+  email: VARCHAR(500)
+  email_hash: VARCHAR(64)
+  password_hash: VARCHAR(255)
+  role: VARCHAR(50)
+  created_at: TIMESTAMP
+  updated_at: TIMESTAMP
+  is_active: BOOLEAN
+}
+
+' MAIN TABLES
+class Persons {
+  primary_key(internal_id): INTEGER
+  --
+  public_id: GUID
+  full_name: VARCHAR(200)
+  first_name: VARCHAR(100)
+  last_name: VARCHAR(100)
+  id_document: VARCHAR(50)
+  document_type: VARCHAR(20)
+  phone: VARCHAR(20)
+  email: VARCHAR(500)
+  email_hash: VARCHAR(64)
+  photo: BLOB
+  person_type: VARCHAR(20)
+  status: VARCHAR(20)
+  created_at: TIMESTAMP
+  updated_at: TIMESTAMP
+  is_active: BOOLEAN
+}
+
+class Companies {
+  primary_key(internal_id): INTEGER
+  --
+  public_id: GUID
+  company_name: VARCHAR(200)
+  tax_id: VARCHAR(50)
+  contact_person: VARCHAR(100)
+  phone: VARCHAR(20)
+  email: VARCHAR(500)
+  email_hash: VARCHAR(64)
+  address: TEXT
+  contract_status: VARCHAR(20)
+  contract_start_date: DATE
+  contract_end_date: DATE
+  created_at: TIMESTAMP
+  updated_at: TIMESTAMP
+  is_active: BOOLEAN
+}
+
+class Vehicles {
+  primary_key(internal_id): INTEGER
+  --
+  public_id: GUID
+  license_plate: VARCHAR(20)
+  make: VARCHAR(50)
+  model: VARCHAR(50)
+  color: VARCHAR(30)
+  year: INTEGER
+  vehicle_type: VARCHAR(30)
+  status: VARCHAR(20)
+  created_at: TIMESTAMP
+  updated_at: TIMESTAMP
+  is_active: BOOLEAN
+}
+
+' MIDDLE TABLES (Junction/Relationship Tables)
+class Person_Company {
+  primary_key(internal_id): INTEGER
+  --
+  public_id: GUID
+  foreign_key(person_internal_id): INTEGER
+  foreign_key(company_internal_id): INTEGER
+  relationship_type: VARCHAR(30)
+  position: VARCHAR(100)
+  department: VARCHAR(100)
+  start_date: DATE
+  end_date: DATE
+  created_at: TIMESTAMP
+  updated_at: TIMESTAMP
+  is_active: BOOLEAN
+}
+
+class Person_Vehicle {
+  primary_key(internal_id): INTEGER
+  --
+  public_id: GUID
+  foreign_key(person_internal_id): INTEGER
+  foreign_key(vehicle_internal_id): INTEGER
+  relationship_type: VARCHAR(30)
+  registration_date: DATE
+  expiration_date: DATE
+  created_at: TIMESTAMP
+  updated_at: TIMESTAMP
+  is_active: BOOLEAN
+}
+
+class Company_Vehicle {
+  primary_key(internal_id): INTEGER
+  --
+  public_id: GUID
+  foreign_key(company_internal_id): INTEGER
+  foreign_key(vehicle_internal_id): INTEGER
+  assignment_date: DATE
+  created_at: TIMESTAMP
+  updated_at: TIMESTAMP
+  is_active: BOOLEAN
+}
+
+' EVENT TABLE
+class Visits {
+  primary_key(internal_id): INTEGER
+  --
+  public_id: GUID
+  foreign_key(person_internal_id): INTEGER
+  foreign_key(vehicle_internal_id): INTEGER
+  foreign_key(company_internal_id): INTEGER
+  foreign_key(authorized_by_user_id): INTEGER
+  entry_timestamp: TIMESTAMP
+  exit_timestamp: TIMESTAMP
+  visit_type: VARCHAR(30)
+  arrival_method: VARCHAR(20)
+  visit_purpose: VARCHAR(200)
+  gate_location: VARCHAR(100)
+  notes: TEXT
+  status: VARCHAR(20)
+  created_at: TIMESTAMP
+  updated_at: TIMESTAMP
+}
+
+' Relationships - Main Tables to Middle Tables
+Persons "1" -- "0..*" Person_Company
+Companies "1" -- "0..*" Person_Company
+
+Persons "1" -- "0..*" Person_Vehicle
+Vehicles "1" -- "0..*" Person_Vehicle
+
+Companies "1" -- "0..*" Company_Vehicle
+Vehicles "1" -- "0..*" Company_Vehicle
+
+' Relationships - Main Tables to Event Table
+Persons "1" -- "0..*" Visits : "visitor"
+Vehicles "0..1" -- "0..*" Visits : "optional"
+Companies "0..1" -- "0..*" Visits : "visiting"
+
+' User authorization relationship
+Users "1" -- "0..*" Visits : "authorizes"
+
+@enduml

@@ -1,0 +1,35 @@
+apiVersion: 1
+
+datasources:
+  - name: Prometheus
+    type: prometheus
+    access: proxy
+    url: http://prometheus:9090
+    isDefault: true
+    editable: true
+    jsonData:
+      httpMethod: POST
+      timeInterval: 5s
+      exemplarTraceIdDestinations:
+        - name: Tempo
+          datasourceUid: tempo-uid
+
+  - name: Tempo
+    type: tempo
+    access: proxy
+    uid: tempo-uid
+    url: http://tempo:3200
+    editable: true
+    jsonData:
+      tracesToMetrics:
+        datasourceUid: default
+        tags: [ 'service.name' ]
+        map:
+          - operation: sum
+            query: 'sum(rate(your_metric_name{$$__tags}[5m]))'
+      
+      serviceMap:
+        datasourceUid: prometheus-uid
+      
+      nodeGraph:
+        enabled: true
